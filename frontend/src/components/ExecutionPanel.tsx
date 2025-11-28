@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useExecutionStore } from '@/store/executionStore'
 import { X, ChevronDown, ChevronUp, Terminal, AlertCircle, Info, CheckCircle } from 'lucide-react'
 
@@ -6,6 +6,14 @@ export default function ExecutionPanel() {
   const { executionLogs, isExecuting, currentExecutionId, resetExecution } = useExecutionStore()
   const [isExpanded, setIsExpanded] = useState(true)
   const [isMinimized, setIsMinimized] = useState(false)
+  const logsEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    if (isExpanded && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [executionLogs, isExpanded])
 
   if (!currentExecutionId && executionLogs.length === 0) {
     return null
@@ -136,6 +144,8 @@ export default function ExecutionPanel() {
                   </div>
                 </div>
               ))}
+              {/* Invisible div for auto-scroll */}
+              <div ref={logsEndRef} />
             </div>
           )}
         </div>

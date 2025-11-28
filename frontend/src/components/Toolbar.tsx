@@ -187,6 +187,9 @@ export default function Toolbar() {
   const executeWithInputData = (inputData: Record<string, any>) => {
     console.log('Starting execution with input data:', inputData)
 
+    // Close the input form immediately so user can see execution progress
+    setShowInputForm(false)
+
     // Update the mutation to use input data
     executionsApi.create({
       workflow_id: currentWorkflowId!,
