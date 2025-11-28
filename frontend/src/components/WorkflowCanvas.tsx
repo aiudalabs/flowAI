@@ -5,6 +5,7 @@ import ReactFlow, {
   MiniMap,
   BackgroundVariant,
   ReactFlowProvider,
+  ConnectionMode,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 
@@ -83,7 +84,15 @@ function WorkflowCanvasInner() {
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        defaultEdgeOptions={{
+          type: 'smoothstep',
+          animated: false,
+          style: { stroke: '#94a3b8', strokeWidth: 2 },
+        }}
         fitView
+        snapToGrid
+        snapGrid={[15, 15]}
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <Controls />

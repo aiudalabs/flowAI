@@ -42,8 +42,34 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   onConnect: (connection) => {
+    console.log('🔗 Connection attempt:', connection)
+
+    // Validate connection
+    if (!connection.source || !connection.target) {
+      console.error('❌ Invalid connection: missing source or target')
+      return
+    }
+
+    // Check if connection already exists
+    const existingEdge = get().edges.find(
+      (edge) =>
+        edge.source === connection.source &&
+        edge.target === connection.target &&
+        edge.sourceHandle === connection.sourceHandle &&
+        edge.targetHandle === connection.targetHandle
+    )
+
+    if (existingEdge) {
+      console.warn('⚠️ Connection already exists:', existingEdge)
+      return
+    }
+
+    console.log('✅ Creating edge:', connection)
+    const newEdges = addEdge(connection, get().edges)
+    console.log('📊 Total edges after adding:', newEdges.length)
+
     set({
-      edges: addEdge(connection, get().edges),
+      edges: newEdges,
     })
   },
 
