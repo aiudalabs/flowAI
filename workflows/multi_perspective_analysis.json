@@ -1,0 +1,155 @@
+{
+  "name": "Multi-Perspective AI Analysis",
+  "description": "Analyzes a topic from 5 different perspectives using parallel LLM calls, then synthesizes the results",
+  "graph_data": {
+    "nodes": [
+      {
+        "id": "trigger-1",
+        "type": "trigger",
+        "position": { "x": 100, "y": 300 },
+        "data": {
+          "label": "Start Analysis",
+          "message": "Starting multi-perspective analysis on: {{topic}}"
+        }
+      },
+      {
+        "id": "llm-technical",
+        "type": "llm",
+        "position": { "x": 400, "y": 100 },
+        "data": {
+          "label": "Technical Analysis",
+          "model": "gpt-4o-mini",
+          "prompt": "You are a technical expert. Analyze this topic from a technical perspective, focusing on implementation details, technologies, and technical feasibility.\n\nTopic: {{topic}}\n\nProvide a detailed technical analysis in 3-4 paragraphs.",
+          "temperature": 0.7,
+          "max_tokens": 500
+        }
+      },
+      {
+        "id": "llm-business",
+        "type": "llm",
+        "position": { "x": 400, "y": 220 },
+        "data": {
+          "label": "Business Analysis",
+          "model": "gpt-4o-mini",
+          "prompt": "You are a business strategist. Analyze this topic from a business perspective, focusing on market opportunities, revenue potential, and business viability.\n\nTopic: {{topic}}\n\nProvide a detailed business analysis in 3-4 paragraphs.",
+          "temperature": 0.7,
+          "max_tokens": 500
+        }
+      },
+      {
+        "id": "llm-user",
+        "type": "llm",
+        "position": { "x": 400, "y": 340 },
+        "data": {
+          "label": "User Experience Analysis",
+          "model": "gpt-4o-mini",
+          "prompt": "You are a UX expert. Analyze this topic from a user experience perspective, focusing on usability, accessibility, and user satisfaction.\n\nTopic: {{topic}}\n\nProvide a detailed UX analysis in 3-4 paragraphs.",
+          "temperature": 0.7,
+          "max_tokens": 500
+        }
+      },
+      {
+        "id": "llm-ethical",
+        "type": "llm",
+        "position": { "x": 400, "y": 460 },
+        "data": {
+          "label": "Ethical Analysis",
+          "model": "gpt-4o-mini",
+          "prompt": "You are an ethics expert. Analyze this topic from an ethical perspective, focusing on privacy, fairness, societal impact, and potential risks.\n\nTopic: {{topic}}\n\nProvide a detailed ethical analysis in 3-4 paragraphs.",
+          "temperature": 0.7,
+          "max_tokens": 500
+        }
+      },
+      {
+        "id": "llm-competitive",
+        "type": "llm",
+        "position": { "x": 400, "y": 580 },
+        "data": {
+          "label": "Competitive Analysis",
+          "model": "gpt-4o-mini",
+          "prompt": "You are a competitive intelligence analyst. Analyze this topic from a competitive landscape perspective, focusing on existing solutions, market leaders, and competitive advantages.\n\nTopic: {{topic}}\n\nProvide a detailed competitive analysis in 3-4 paragraphs.",
+          "temperature": 0.7,
+          "max_tokens": 500
+        }
+      },
+      {
+        "id": "llm-synthesizer",
+        "type": "llm",
+        "position": { "x": 800, "y": 340 },
+        "data": {
+          "label": "Synthesis & Recommendations",
+          "model": "gpt-4o-mini",
+          "prompt": "You are a strategic advisor. Synthesize the following analyses into a comprehensive report with actionable recommendations.\n\n## Technical Analysis\n{{technical_analysis}}\n\n## Business Analysis\n{{business_analysis}}\n\n## User Experience Analysis\n{{ux_analysis}}\n\n## Ethical Analysis\n{{ethical_analysis}}\n\n## Competitive Analysis\n{{competitive_analysis}}\n\n---\n\nProvide:\n1. **Executive Summary** (2 paragraphs)\n2. **Key Insights** (5-7 bullet points)\n3. **Recommendations** (3-5 prioritized actions)\n4. **Risks & Mitigation** (3-4 key risks with mitigation strategies)",
+          "temperature": 0.8,
+          "max_tokens": 1000
+        }
+      },
+      {
+        "id": "output-1",
+        "type": "output",
+        "position": { "x": 1100, "y": 340 },
+        "data": {
+          "label": "Final Report",
+          "format": "json"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "trigger-1",
+        "target": "llm-technical"
+      },
+      {
+        "id": "e2",
+        "source": "trigger-1",
+        "target": "llm-business"
+      },
+      {
+        "id": "e3",
+        "source": "trigger-1",
+        "target": "llm-user"
+      },
+      {
+        "id": "e4",
+        "source": "trigger-1",
+        "target": "llm-ethical"
+      },
+      {
+        "id": "e5",
+        "source": "trigger-1",
+        "target": "llm-competitive"
+      },
+      {
+        "id": "e6",
+        "source": "llm-technical",
+        "target": "llm-synthesizer"
+      },
+      {
+        "id": "e7",
+        "source": "llm-business",
+        "target": "llm-synthesizer"
+      },
+      {
+        "id": "e8",
+        "source": "llm-user",
+        "target": "llm-synthesizer"
+      },
+      {
+        "id": "e9",
+        "source": "llm-ethical",
+        "target": "llm-synthesizer"
+      },
+      {
+        "id": "e10",
+        "source": "llm-competitive",
+        "target": "llm-synthesizer"
+      },
+      {
+        "id": "e11",
+        "source": "llm-synthesizer",
+        "target": "output-1"
+      }
+    ]
+  }
+}
