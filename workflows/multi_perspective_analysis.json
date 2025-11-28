@@ -99,78 +99,78 @@
         "id": "e1",
         "source": "trigger-1",
         "target": "llm-technical",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e2",
         "source": "trigger-1",
         "target": "llm-business",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e3",
         "source": "trigger-1",
         "target": "llm-user",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e4",
         "source": "trigger-1",
         "target": "llm-ethical",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e5",
         "source": "trigger-1",
         "target": "llm-competitive",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e6",
         "source": "llm-technical",
         "target": "llm-synthesizer",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e7",
         "source": "llm-business",
         "target": "llm-synthesizer",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e8",
         "source": "llm-user",
         "target": "llm-synthesizer",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e9",
         "source": "llm-ethical",
         "target": "llm-synthesizer",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e10",
         "source": "llm-competitive",
         "target": "llm-synthesizer",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       },
       {
         "id": "e11",
         "source": "llm-synthesizer",
         "target": "output-1",
-        "sourceHandle": "right-source",
-        "targetHandle": "left-target"
+        "sourceHandle": "right",
+        "targetHandle": "left"
       }
     ]
   }

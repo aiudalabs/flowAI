@@ -62,59 +62,37 @@ const BaseNode = memo(({
         getStatusStyles()
       )}
     >
-      {/* Top Handle - Input */}
+      {/* Top Handle - Input (receive from above) */}
       {handleTop && (
         <Handle
           type="target"
           position={Position.Top}
           id="top"
-          className="w-3 h-3 !bg-gray-400 hover:!bg-blue-500 transition-colors"
+          className="w-3 h-3 !bg-blue-400 hover:!bg-blue-600 transition-colors"
           isConnectable={true}
         />
       )}
 
-      {/* Left Handles - Input (target) and Output (source) */}
+      {/* Left Handle - Input (receive from left) */}
       {handleLeft && (
-        <>
-          <Handle
-            type="target"
-            position={Position.Left}
-            id="left-target"
-            className="w-3 h-3 !bg-gray-400 hover:!bg-blue-500 transition-colors"
-            style={{ top: '40%' }}
-            isConnectable={true}
-          />
-          <Handle
-            type="source"
-            position={Position.Left}
-            id="left-source"
-            className="w-3 h-3 !bg-gray-400 hover:!bg-green-500 transition-colors"
-            style={{ top: '60%' }}
-            isConnectable={true}
-          />
-        </>
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="left"
+          className="w-3 h-3 !bg-blue-400 hover:!bg-blue-600 transition-colors"
+          isConnectable={true}
+        />
       )}
 
-      {/* Right Handles - Input (target) and Output (source) */}
+      {/* Right Handle - Output (send to right) */}
       {handleRight && (
-        <>
-          <Handle
-            type="target"
-            position={Position.Right}
-            id="right-target"
-            className="w-3 h-3 !bg-gray-400 hover:!bg-blue-500 transition-colors"
-            style={{ top: '40%' }}
-            isConnectable={true}
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            id="right-source"
-            className="w-3 h-3 !bg-gray-400 hover:!bg-green-500 transition-colors"
-            style={{ top: '60%' }}
-            isConnectable={true}
-          />
-        </>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="right"
+          className="w-3 h-3 !bg-green-400 hover:!bg-green-600 transition-colors"
+          isConnectable={true}
+        />
       )}
 
       <div className="flex items-center gap-2">
@@ -125,13 +103,13 @@ const BaseNode = memo(({
         {getStatusIcon()}
       </div>
 
-      {/* Bottom Handle - Output */}
+      {/* Bottom Handle - Output (send to bottom) */}
       {handleBottom && (
         <Handle
           type="source"
           position={Position.Bottom}
           id="bottom"
-          className="w-3 h-3 !bg-gray-400 hover:!bg-green-500 transition-colors"
+          className="w-3 h-3 !bg-green-400 hover:!bg-green-600 transition-colors"
           isConnectable={true}
         />
       )}
