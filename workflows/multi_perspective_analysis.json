@@ -1,6 +1,6 @@
 {
   "name": "Multi-Perspective AI Analysis",
-  "description": "Analyzes a topic from 5 different perspectives using parallel LLM calls, then synthesizes the results",
+  "description": "Analyzes a topic from 5 different perspectives using parallel LLM calls, then synthesizes the results - Horizontal Layout",
   "graph_data": {
     "nodes": [
       {
@@ -15,7 +15,7 @@
       {
         "id": "llm-technical",
         "type": "llm",
-        "position": { "x": 400, "y": 100 },
+        "position": { "x": 400, "y": 50 },
         "data": {
           "label": "Technical Analysis",
           "model": "gpt-4o-mini",
@@ -27,7 +27,7 @@
       {
         "id": "llm-business",
         "type": "llm",
-        "position": { "x": 400, "y": 220 },
+        "position": { "x": 400, "y": 150 },
         "data": {
           "label": "Business Analysis",
           "model": "gpt-4o-mini",
@@ -39,9 +39,9 @@
       {
         "id": "llm-user",
         "type": "llm",
-        "position": { "x": 400, "y": 340 },
+        "position": { "x": 400, "y": 250 },
         "data": {
-          "label": "User Experience Analysis",
+          "label": "UX Analysis",
           "model": "gpt-4o-mini",
           "prompt": "You are a UX expert. Analyze this topic from a user experience perspective, focusing on usability, accessibility, and user satisfaction.\n\nTopic: {{topic}}\n\nProvide a detailed UX analysis in 3-4 paragraphs.",
           "temperature": 0.7,
@@ -51,7 +51,7 @@
       {
         "id": "llm-ethical",
         "type": "llm",
-        "position": { "x": 400, "y": 460 },
+        "position": { "x": 400, "y": 350 },
         "data": {
           "label": "Ethical Analysis",
           "model": "gpt-4o-mini",
@@ -63,7 +63,7 @@
       {
         "id": "llm-competitive",
         "type": "llm",
-        "position": { "x": 400, "y": 580 },
+        "position": { "x": 400, "y": 450 },
         "data": {
           "label": "Competitive Analysis",
           "model": "gpt-4o-mini",
@@ -75,7 +75,7 @@
       {
         "id": "llm-synthesizer",
         "type": "llm",
-        "position": { "x": 800, "y": 340 },
+        "position": { "x": 750, "y": 250 },
         "data": {
           "label": "Synthesis & Recommendations",
           "model": "gpt-4o-mini",
@@ -87,7 +87,7 @@
       {
         "id": "output-1",
         "type": "output",
-        "position": { "x": 1100, "y": 340 },
+        "position": { "x": 1050, "y": 250 },
         "data": {
           "label": "Final Report",
           "format": "json"
@@ -98,57 +98,79 @@
       {
         "id": "e1",
         "source": "trigger-1",
-        "target": "llm-technical"
+        "target": "llm-technical",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e2",
         "source": "trigger-1",
-        "target": "llm-business"
+        "target": "llm-business",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e3",
         "source": "trigger-1",
-        "target": "llm-user"
+        "target": "llm-user",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e4",
         "source": "trigger-1",
-        "target": "llm-ethical"
+        "target": "llm-ethical",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e5",
         "source": "trigger-1",
-        "target": "llm-competitive"
+        "target": "llm-competitive",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e6",
         "source": "llm-technical",
-        "target": "llm-synthesizer"
+        "target": "llm-synthesizer",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e7",
         "source": "llm-business",
-        "target": "llm-synthesizer"
+        "target": "llm-synthesizer",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e8",
         "source": "llm-user",
-        "target": "llm-synthesizer"
+        "target": "llm-synthesizer",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e9",
         "source": "llm-ethical",
-        "target": "llm-synthesizer"
+        "target": "llm-synthesizer",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e10",
         "source": "llm-competitive",
-        "target": "llm-synthesizer"
+        "target": "llm-synthesizer",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       },
       {
         "id": "e11",
         "source": "llm-synthesizer",
-        "target": "output-1"
+        "target": "output-1",
+        "sourceHandle": "right-source",
+        "targetHandle": "left-target"
       }
     ]
   }
