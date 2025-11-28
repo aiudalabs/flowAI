@@ -9,6 +9,8 @@ interface BaseNodeProps extends NodeProps {
   color: string
   handleTop?: boolean
   handleBottom?: boolean
+  handleLeft?: boolean
+  handleRight?: boolean
 }
 
 const BaseNode = memo(({
@@ -18,7 +20,9 @@ const BaseNode = memo(({
   icon,
   color,
   handleTop = true,
-  handleBottom = true
+  handleBottom = true,
+  handleLeft = true,
+  handleRight = true
 }: BaseNodeProps) => {
   const nodeStatus = useExecutionStore((state) => state.nodeStatuses[id])
 
@@ -52,18 +56,60 @@ const BaseNode = memo(({
   return (
     <div
       className={cn(
-        'px-4 py-3 shadow-md rounded-md bg-white border-2 transition-all duration-300',
+        'px-4 py-3 shadow-md rounded-md bg-white border-2 transition-all duration-300 relative',
         selected ? 'ring-2 ring-blue-500' : '',
         color,
         getStatusStyles()
       )}
     >
+      {/* Top Handle - Input */}
       {handleTop && (
         <Handle
           type="target"
           position={Position.Top}
-          className="w-3 h-3 !bg-gray-400"
+          id="top"
+          className="w-3 h-3 !bg-gray-400 hover:!bg-blue-500 transition-colors"
         />
+      )}
+
+      {/* Left Handle - Both input and output */}
+      {handleLeft && (
+        <>
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="left-target"
+            className="w-3 h-3 !bg-gray-400 hover:!bg-blue-500 transition-colors"
+            style={{ top: '50%' }}
+          />
+          <Handle
+            type="source"
+            position={Position.Left}
+            id="left-source"
+            className="w-3 h-3 !bg-gray-400 hover:!bg-green-500 transition-colors"
+            style={{ top: '50%' }}
+          />
+        </>
+      )}
+
+      {/* Right Handle - Both input and output */}
+      {handleRight && (
+        <>
+          <Handle
+            type="target"
+            position={Position.Right}
+            id="right-target"
+            className="w-3 h-3 !bg-gray-400 hover:!bg-blue-500 transition-colors"
+            style={{ top: '50%' }}
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="right-source"
+            className="w-3 h-3 !bg-gray-400 hover:!bg-green-500 transition-colors"
+            style={{ top: '50%' }}
+          />
+        </>
       )}
 
       <div className="flex items-center gap-2">
@@ -74,11 +120,13 @@ const BaseNode = memo(({
         {getStatusIcon()}
       </div>
 
+      {/* Bottom Handle - Output */}
       {handleBottom && (
         <Handle
           type="source"
           position={Position.Bottom}
-          className="w-3 h-3 !bg-gray-400"
+          id="bottom"
+          className="w-3 h-3 !bg-gray-400 hover:!bg-green-500 transition-colors"
         />
       )}
     </div>
