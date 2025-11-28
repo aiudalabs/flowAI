@@ -11,6 +11,10 @@ Build, execute, and deploy LangGraph agentic workflows through a visual drag-and
 - 🚀 **Deploy Anywhere** - Export to Docker, Cloud Run, Lambda
 - 💾 **State Management** - Built on LangGraph with checkpointing and memory
 
+## Visual Overview
+
+![FlowAI Architecture](./imgs/ui.png)
+
 ## Quick Start
 
 ### Prerequisites
