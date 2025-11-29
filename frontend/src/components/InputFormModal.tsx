@@ -62,8 +62,9 @@ export default function InputFormModal({ isOpen, onClose, onExecute }: InputForm
   }, [isOpen, nodes, reset])
 
   const onSubmit = (data: Record<string, any>) => {
+    console.log('📝 Input form submitted with data:', data)
     onExecute(data)
-    onClose()
+    // Don't call onClose() here - let the parent handle it
   }
 
   if (!isOpen) return null

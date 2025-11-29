@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
 
+    # E2B Code Interpreter
+    E2B_API_KEY: str = ""
+    E2B_TEMPLATE_ID: str = ""  # Optional: Custom template ID for faster execution
+
     # Environment
     ENVIRONMENT: str = "development"
 

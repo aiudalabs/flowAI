@@ -1,4 +1,4 @@
-import { Play, Brain, Globe, GitBranch, FileOutput } from 'lucide-react'
+import { Play, Brain, Globe, GitBranch, FileOutput, Database } from 'lucide-react'
 
 interface NodePaletteProps {
   onDragStart: (event: React.DragEvent, nodeType: string) => void
@@ -39,6 +39,13 @@ const nodeDefinitions = [
     icon: FileOutput,
     color: 'bg-red-100 border-red-300 text-red-700',
     description: 'Final output',
+  },
+  {
+    type: 'dataset',
+    label: 'Dataset',
+    icon: Database,
+    color: 'bg-indigo-100 border-indigo-300 text-indigo-700',
+    description: 'Load a dataset',
   },
 ]
 

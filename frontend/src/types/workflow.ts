@@ -10,6 +10,7 @@ export interface WorkflowNode extends Node {
 export interface GraphData {
   nodes: WorkflowNode[]
   edges: Edge[]
+  state_schema?: any[]  // LangGraph state schema (optional for backward compatibility)
   viewport?: {
     x: number
     y: number
@@ -97,4 +98,7 @@ export interface NodeConfigData {
 
   // Output node
   format?: 'json' | 'text' | 'raw'
+
+  // Dataset node
+  dataset_id?: string
 }

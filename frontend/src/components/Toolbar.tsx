@@ -1,15 +1,35 @@
 import { useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Save, Play, FolderOpen, Download } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { Save, Play, Download, Code, Settings, Database, Lightbulb, GitBranch, ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useExecutionStore } from '@/store/executionStore'
-import { workflowsApi, executionsApi } from '@/lib/api'
+import { useAuthStore } from '@/stores/authStore'
+import { executionApi } from '@/services/api'
 import InputFormModal from './InputFormModal'
 import OutputViewer from './OutputViewer'
+import StateDesigner from './StateDesigner'
+import StateInspector from './StateInspector'
+import { exampleWorkflow } from '@/templates/exampleWorkflow'
+import { conditionalWorkflow } from '@/templates/conditionalWorkflow'
 
 export default function Toolbar() {
-  const queryClient = useQueryClient()
-  const { nodes, edges, setNodes, setEdges } = useWorkflowStore()
+  const navigate = useNavigate()
+  const {
+    nodes,
+    edges,
+    stateSchema,
+    setNodes,
+    setEdges,
+    setStateSchema,
+    name,
+    setName,
+    saveWorkflow,
+    isSaving,
+    lastSaved,
+    currentWorkflowId
+  } = useWorkflowStore()
+
   const {
     startExecution,
     setNodeStatus,
@@ -17,89 +37,22 @@ export default function Toolbar() {
     completeExecution,
     resetExecution
   } = useExecutionStore()
-  const [workflowName, setWorkflowName] = useState('Untitled Workflow')
-  const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null)
-  const [showLoadDialog, setShowLoadDialog] = useState(false)
+
   const [showInputForm, setShowInputForm] = useState(false)
   const [showOutputViewer, setShowOutputViewer] = useState(false)
+  const [showStateDesigner, setShowStateDesigner] = useState(false)
+  const [showStateInspector, setShowStateInspector] = useState(false)
   const [currentExecutionData, setCurrentExecutionData] = useState<any>(null)
-
-  // Fetch workflows list
-  const { data: workflows, isLoading: loadingWorkflows } = useQuery({
-    queryKey: ['workflows'],
-    queryFn: workflowsApi.list,
-  })
-
-  console.log('📦 Workflows data:', workflows)
-  console.log('⏳ Loading workflows:', loadingWorkflows)
-
-  // Save workflow mutation
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const graphData = { nodes, edges }
-      console.log('💾 Saving workflow with graph data:', graphData)
-      console.log('📊 Nodes being saved:', nodes)
-      console.log('🔗 Edges being saved:', edges)
-
-      // Validate nodes have required fields
-      const validatedNodes = nodes.map(node => ({
-        id: node.id,
-        type: node.type,
-        position: node.position || { x: 0, y: 0 },
-        data: node.data || {}
-      }))
-
-      // Validate edges have required fields
-      const validatedEdges = edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        sourceHandle: edge.sourceHandle || null,
-        targetHandle: edge.targetHandle || null,
-        type: edge.type || null
-      }))
-
-      const validatedGraphData = {
-        nodes: validatedNodes,
-        edges: validatedEdges
-      }
-
-      console.log('✅ Validated graph data:', validatedGraphData)
-
-      if (currentWorkflowId) {
-        console.log('Updating existing workflow:', currentWorkflowId)
-        return workflowsApi.update(currentWorkflowId, {
-          name: workflowName,
-          graph_data: validatedGraphData,
-        })
-      } else {
-        console.log('Creating new workflow')
-        return workflowsApi.create({
-          name: workflowName,
-          graph_data: validatedGraphData,
-        })
-      }
-    },
-    onSuccess: (data) => {
-      setCurrentWorkflowId(data.id)
-      queryClient.invalidateQueries({ queryKey: ['workflows'] })
-      alert('Workflow saved successfully!')
-    },
-    onError: (error: any) => {
-      console.error('❌ Save failed:', error)
-      console.error('Error response:', error.response?.data)
-      const errorMsg = error.response?.data?.detail || error.message || 'Unknown error'
-      alert('Failed to save workflow: ' + errorMsg)
-    },
-  })
+  const [executionStateHistory] = useState<Array<{
+    nodeId: string
+    nodeName: string
+    timestamp: string
+    stateSnapshot: Record<string, any>
+  }>>([])
 
   // Execute workflow mutation
   const executeMutation = useMutation({
     mutationFn: async () => {
-      console.log('Execute clicked. Current workflow ID:', currentWorkflowId)
-      console.log('Nodes:', nodes)
-      console.log('Edges:', edges)
-
       if (!currentWorkflowId) {
         throw new Error('Please save the workflow first')
       }
@@ -108,66 +61,74 @@ export default function Toolbar() {
         throw new Error('Workflow is empty. Add some nodes first.')
       }
 
+      // Auto-save before execution
+      await saveWorkflow()
+
       console.log('Creating execution...')
-      return executionsApi.create({
+      return executionApi.create({
         workflow_id: currentWorkflowId,
         input_data: {},
       })
     },
     onSuccess: (execution) => {
       console.log('Execution created:', execution)
-
-      // Start visual execution tracking
-      startExecution(execution.id)
-      resetExecution()
-      startExecution(execution.id)
-
-      // Subscribe to execution updates
-      const ws = executionsApi.subscribeToExecution(execution.id, {
-        onStatus: (status) => {
-          console.log('📊 Execution status:', status)
-        },
-        onLog: (log) => {
-          console.log('📝 Execution log:', log)
-          addLog(log)
-
-          // Update node status based on log messages
-          if (log.node_id) {
-            if (log.message.includes('Executing node')) {
-              setNodeStatus(log.node_id, 'running')
-            } else if (log.message.includes('Node completed')) {
-              setNodeStatus(log.node_id, 'completed')
-            } else if (log.message.includes('Node failed') || log.level === 'error') {
-              setNodeStatus(log.node_id, 'failed')
-            }
-          }
-        },
-        onComplete: (data) => {
-          console.log('✅ Execution complete:', data)
-          completeExecution()
-
-          // Show results
-          const output = data.output || data.output_data
-          if (output) {
-            console.log('📤 Final Output:', output)
-          }
-
-          alert(`✅ Execution completed!\n\nStatus: ${data.status}\n\nCheck console for full output.`)
-        },
-        onError: (error) => {
-          console.error('❌ Execution error:', error)
-          completeExecution()
-          alert('Execution failed: ' + error)
-        },
-      })
-
-      console.log('WebSocket connection established')
+      handleExecutionStart(execution)
     },
     onError: (error: any) => {
       console.error('Execution error:', error)
       alert('Failed to execute workflow: ' + error.message)
     },
   })
+
+  const handleExecutionStart = (execution: any) => {
+    // Start visual execution tracking
+    resetExecution()
+    startExecution(execution.id)
+
+    // Subscribe to execution updates
+    executionApi.subscribeToExecution(execution.id, {
+      onStatus: (status) => {
+        console.log('📊 Execution status:', status)
+      },
+      onLog: (log) => {
+        console.log('📝 Execution log:', log)
+        addLog(log)
+
+        // Update node status based on log messages
+        if (log.node_id) {
+          const message = log.message.toLowerCase()
+
+          if (message.includes('executing node') || message.includes('⏳')) {
+            setNodeStatus(log.node_id, 'running')
+          } else if (message.includes('node completed') || message.includes('✅')) {
+            setNodeStatus(log.node_id, 'completed')
+          } else if (message.includes('node failed') || message.includes('❌') || log.level === 'error') {
+            setNodeStatus(log.node_id, 'failed')
+          }
+        }
+      },
+      onComplete: (data) => {
+        console.log('✅ Execution complete:', data)
+        completeExecution()
+
+        // Store execution data for output viewer
+        setCurrentExecutionData({
+          id: execution.id,
+          status: data.status,
+          output_data: data.output || data.output_data,
+          completed_at: new Date().toISOString(),
+        })
+
+        // Show output viewer
+        setShowOutputViewer(true)
+      },
+      onError: (error) => {
+        console.error('❌ Execution error:', error)
+        completeExecution()
+        alert('Execution failed: ' + error)
+      },
+    })
+  }
 
   const handleExecute = () => {
     if (!currentWorkflowId) {
@@ -184,100 +145,31 @@ export default function Toolbar() {
     setShowInputForm(true)
   }
 
-  const executeWithInputData = (inputData: Record<string, any>) => {
-    console.log('Starting execution with input data:', inputData)
-
-    // Close the input form immediately so user can see execution progress
+  const executeWithInputData = async (inputData: Record<string, any>) => {
     setShowInputForm(false)
 
-    // Update the mutation to use input data
-    executionsApi.create({
-      workflow_id: currentWorkflowId!,
-      input_data: inputData,
-    }).then((execution) => {
-      console.log('Execution created:', execution)
+    try {
+      // Auto-save before execution
+      await saveWorkflow()
 
-      // Start visual execution tracking
-      resetExecution()
-      startExecution(execution.id)
-
-      // Subscribe to execution updates
-      executionsApi.subscribeToExecution(execution.id, {
-        onStatus: (status) => {
-          console.log('📊 Status update:', status)
-        },
-        onLog: (log) => {
-          console.log('📝 Log received:', log)
-          addLog(log)
-
-          // Update node status based on log messages
-          if (log.node_id) {
-            if (log.message.includes('Executing node')) {
-              setNodeStatus(log.node_id, 'running')
-            } else if (log.message.includes('Node completed')) {
-              setNodeStatus(log.node_id, 'completed')
-            } else if (log.message.includes('Node failed') || log.level === 'error') {
-              setNodeStatus(log.node_id, 'failed')
-            }
-          }
-        },
-        onComplete: (data) => {
-          console.log('✅ Execution complete:', data)
-          completeExecution()
-
-          // Store execution data for output viewer
-          setCurrentExecutionData({
-            id: execution.id,
-            status: data.status,
-            output_data: data.output,
-            completed_at: new Date().toISOString(),
-          })
-
-          // Show output viewer
-          setShowOutputViewer(true)
-        },
-        onError: (error) => {
-          console.error('❌ Execution error:', error)
-          completeExecution()
-          alert('Execution failed: ' + error)
-        },
+      const execution = await executionApi.create({
+        workflow_id: currentWorkflowId!,
+        input_data: inputData,
       })
-    }).catch((error) => {
+
+      handleExecutionStart(execution)
+    } catch (error: any) {
       console.error('Failed to create execution:', error)
       alert('Failed to start execution: ' + error.message)
-    })
-  }
-
-  const handleLoad = async (workflowId: string) => {
-    console.log('🔍 Loading workflow:', workflowId)
-
-    try {
-      // Fetch the full workflow details (including graph_data)
-      const workflow = await workflowsApi.get(workflowId)
-      console.log('✅ Fetched workflow:', workflow)
-      console.log('📊 Graph data:', workflow.graph_data)
-      console.log('🔢 Nodes to load:', workflow.graph_data.nodes)
-      console.log('🔗 Edges to load:', workflow.graph_data.edges)
-
-      setNodes(workflow.graph_data.nodes)
-      setEdges(workflow.graph_data.edges)
-      setWorkflowName(workflow.name)
-      setCurrentWorkflowId(workflow.id)
-      setShowLoadDialog(false)
-
-      console.log('✅ Workflow loaded successfully!')
-      alert(`✅ Workflow "${workflow.name}" loaded!`)
-    } catch (error) {
-      console.error('❌ Failed to load workflow:', error)
-      alert('❌ Failed to load workflow: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
   const handleExport = () => {
     const data = {
-      name: workflowName,
+      name,
       nodes,
       edges,
+      stateSchema,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: 'application/json',
@@ -285,125 +177,201 @@ export default function Toolbar() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${workflowName.replace(/\s+/g, '_')}.json`
+    a.download = `${name.replace(/\s+/g, '_')}.json`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleExportCode = async () => {
+    if (!currentWorkflowId) {
+      alert('⚠️ Please save the workflow first!')
+      return
+    }
+
+    try {
+      const token = useAuthStore.getState().token
+      const response = await fetch(`/api/v1/workflows/${currentWorkflowId}/compile`, {
+        headers: {
+          'Authorization': `Bearer ${token || ''}`
+        }
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Compilation failed')
+      }
+
+      const result = await response.json()
+
+      const blob = new Blob([result.code], { type: 'text/x-python' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${name.replace(/\s+/g, '_')}_langgraph.py`
+      a.click()
+      URL.revokeObjectURL(url)
+
+      alert('✅ LangGraph code exported successfully!')
+    } catch (error) {
+      console.error('Export code failed:', error)
+      alert('❌ Failed to export code: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
+  }
+
+  const handleLoadExample = () => {
+    if (nodes.length > 0) {
+      if (!confirm('⚠️ This will replace your current workflow. Continue?')) return
+    }
+    setNodes(exampleWorkflow.nodes)
+    setEdges(exampleWorkflow.edges)
+    setStateSchema(exampleWorkflow.stateSchema)
+    setName(exampleWorkflow.name)
+  }
+
+  const handleLoadConditionalExample = () => {
+    if (nodes.length > 0) {
+      if (!confirm('⚠️ This will replace your current workflow. Continue?')) return
+    }
+    setNodes(conditionalWorkflow.nodes)
+    setEdges(conditionalWorkflow.edges)
+    setStateSchema(conditionalWorkflow.stateSchema)
+    setName(conditionalWorkflow.name)
   }
 
   return (
     <>
       <div className="h-16 bg-white border-b border-gray-200 px-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-blue-600">FlowAI</h1>
-          <input
-            type="text"
-            value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
-            className="px-3 py-1 border rounded-md"
-            placeholder="Workflow name"
-          />
+          <button
+            onClick={() => navigate('/workflows')}
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+            title="Back to Workflows"
+          >
+            <ArrowLeft size={20} />
+          </button>
+
+          <div className="flex flex-col">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="font-bold text-gray-900 border-none focus:ring-0 p-0 text-lg"
+              placeholder="Workflow Name"
+            />
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              {isSaving ? (
+                <span className="text-blue-600">Saving...</span>
+              ) : lastSaved ? (
+                <span>Saved {lastSaved.toLocaleTimeString()}</span>
+              ) : (
+                <span>Unsaved changes</span>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowLoadDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50"
+            onClick={handleLoadExample}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 border border-yellow-200"
           >
-            <FolderOpen className="w-4 h-4" />
-            Load
+            <Lightbulb className="w-4 h-4" />
+            Basic
           </button>
           <button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            onClick={handleLoadConditionalExample}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 border border-orange-200"
+          >
+            <GitBranch className="w-4 h-4" />
+            Conditional
+          </button>
+
+          <div className="h-6 w-px bg-gray-200 mx-2" />
+
+          <button
+            onClick={() => setShowStateDesigner(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50"
+          >
+            <Settings className="w-4 h-4" />
+            Schema
+            {stateSchema.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                {stateSchema.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => saveWorkflow()}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {saveMutation.isPending ? 'Saving...' : 'Save'}
+            Save
           </button>
+
           <button
             onClick={handleExecute}
             disabled={executeMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-            title={!currentWorkflowId ? 'Save workflow first to enable execution' : 'Execute workflow'}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
           >
             <Play className="w-4 h-4" />
-            {executeMutation.isPending ? 'Executing...' : 'Execute'}
+            Run
           </button>
-          {!currentWorkflowId && (
-            <span className="text-sm text-gray-500">← Save first</span>
-          )}
+
+          <div className="h-6 w-px bg-gray-200 mx-2" />
+
+          <button
+            onClick={handleExportCode}
+            disabled={!currentWorkflowId}
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-md disabled:opacity-50"
+            title="Export Code"
+          >
+            <Code className="w-4 h-4" />
+          </button>
+
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50"
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-md"
+            title="Export JSON"
           >
             <Download className="w-4 h-4" />
-            Export
+          </button>
+
+          <button
+            onClick={() => setShowStateInspector(true)}
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-md"
+            title="State Inspector"
+          >
+            <Database className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Load Dialog */}
-      {showLoadDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-auto">
-            <h2 className="text-xl font-bold mb-4">Load Workflow</h2>
-
-            {loadingWorkflows ? (
-              <div className="text-center text-gray-500 py-8">
-                <p>Loading workflows...</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {workflows && workflows.length > 0 ? (
-                  workflows.map((workflow) => (
-                    <button
-                      key={workflow.id}
-                      onClick={() => {
-                        console.log('🖱️ Clicked workflow:', workflow.id, workflow.name)
-                        handleLoad(workflow.id)
-                      }}
-                      className="w-full text-left px-4 py-3 border rounded-md hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="font-medium">{workflow.name}</div>
-                      <div className="text-sm text-gray-500">
-                        Updated: {new Date(workflow.updated_at).toLocaleDateString()}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        ID: {workflow.id.substring(0, 8)}...
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    <p className="font-medium">No workflows found</p>
-                    <p className="text-sm mt-2">Create and save a workflow first!</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={() => setShowLoadDialog(false)}
-              className="mt-4 w-full px-4 py-2 border rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Input Form Modal */}
       <InputFormModal
         isOpen={showInputForm}
         onClose={() => setShowInputForm(false)}
         onExecute={executeWithInputData}
       />
 
-      {/* Output Viewer */}
       <OutputViewer
         isOpen={showOutputViewer}
         onClose={() => setShowOutputViewer(false)}
         executionData={currentExecutionData}
+      />
+
+      <StateDesigner
+        isOpen={showStateDesigner}
+        onClose={() => setShowStateDesigner(false)}
+        fields={stateSchema}
+        onSave={(fields) => setStateSchema(fields)}
+      />
+
+      <StateInspector
+        isOpen={showStateInspector}
+        onClose={() => setShowStateInspector(false)}
+        currentState={currentExecutionData?.output_data || {}}
+        executionHistory={executionStateHistory}
       />
     </>
   )

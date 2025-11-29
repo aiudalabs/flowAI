@@ -1,0 +1,2 @@
+# E2B Template Configuration
+dockerfile = "e2b.Dockerfile"

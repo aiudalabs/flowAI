@@ -31,3 +31,6 @@ aiohttp==3.9.1
 # Utilities
 python-dotenv==1.0.0
 PyYAML==6.0.1
+
+# E2B Code Interpreter for secure code execution
+e2b-code-interpreter>=0.0.10

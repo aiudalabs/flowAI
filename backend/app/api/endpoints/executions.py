@@ -3,14 +3,56 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
 from datetime import datetime
+import asyncio
 
 from app.core.database import get_db
 from app.models.workflow import Workflow
 from app.models.execution import Execution, ExecutionStatus, ExecutionLog, LogLevel
 from app.schemas.execution import ExecutionCreate, ExecutionResponse
-from app.services.executor.executor import WorkflowExecutor
+from app.services.executor.langgraph_executor import LangGraphDynamicExecutor
 
 router = APIRouter()
+
+
+async def _run_execution_background(execution_id: UUID, graph_data: dict):
+    """Run execution in the background using real LangGraph"""
+    print("="*80)
+    print(f"🔄 BACKGROUND TASK STARTED for execution: {execution_id}")
+    print("="*80)
+
+    # Create a new database session for the background task
+    from app.core.database import SessionLocal
+    db = SessionLocal()
+
+    try:
+        print(f"📊 Graph data: {len(graph_data.get('nodes', []))} nodes, {len(graph_data.get('edges', []))} edges")
+
+        # Use LangGraphDynamicExecutor for REAL LangGraph execution
+        print(f"🔧 Creating LangGraphDynamicExecutor...")
+        executor = LangGraphDynamicExecutor(db)
+        print(f"✅ Executor created successfully")
+
+        print(f"🚀 Starting LangGraph execution in E2B sandbox...")
+        print(f"   Execution ID: {execution_id}")
+        print(f"   This may take 60-90 seconds...")
+
+        await executor.execute(execution_id, graph_data)
+
+        print("="*80)
+        print(f"✅ BACKGROUND EXECUTION COMPLETED SUCCESSFULLY")
+        print("="*80)
+    except Exception as e:
+        print("="*80)
+        print(f"❌ BACKGROUND EXECUTION FAILED")
+        print(f"Error: {e}")
+        print(f"Type: {type(e).__name__}")
+        print("="*80)
+        import traceback
+        traceback.print_exc()
+        print("="*80)
+    finally:
+        db.close()
+        print(f"🔒 Database session closed for execution {execution_id}")
 
 
 @router.post("", response_model=ExecutionResponse, status_code=status.HTTP_201_CREATED)
@@ -47,26 +89,27 @@ async def create_execution(
     db.refresh(execution)
 
     print(f"✅ Execution created: {execution.id}")
+    print(f"   Status: {execution.status}")
+    print(f"   Input data: {execution.input_data}")
 
-    # Start execution asynchronously
-    # Note: In production, this should be done via a task queue (Celery/RQ)
-    # For MVP, we'll execute synchronously but update status properly
-    executor = WorkflowExecutor(db)
-    try:
-        print(f"🚀 Starting execution...")
-        await executor.execute(execution.id, workflow.graph_data)
-        print(f"✅ Execution completed successfully")
-    except Exception as e:
-        print(f"❌ Execution failed: {e}")
-        import traceback
-        traceback.print_exc()
-        # Error handling is done within executor
-        pass
+    # Start execution asynchronously in the background
+    # This allows the API to return immediately while execution runs
+    print("="*80)
+    print(f"🚀 LAUNCHING BACKGROUND EXECUTION TASK")
+    print(f"   Execution ID: {execution.id}")
+    print(f"   Workflow: {workflow.name}")
+    print("="*80)
 
-    # Refresh to get updated status
-    db.refresh(execution)
+    # Create the background task
+    task = asyncio.create_task(_run_execution_background(execution.id, workflow.graph_data))
+    print(f"✅ Background task created: {task}")
+    print(f"   Task done: {task.done()}")
+    print(f"   Task cancelled: {task.cancelled()}")
 
+    # Return execution immediately with PENDING status
+    # Frontend can subscribe to WebSocket to get real-time updates
     print(f"📤 Returning execution with status: {execution.status}")
+    print("="*80)
     return execution
 
 
@@ -101,10 +144,14 @@ def list_workflow_executions(
     return executions
 
 
-@router.websocket("/ws/{execution_id}")
+from app.core.deps import get_current_user_ws
+from app.models.user import User
+
+@router.websocket("/{execution_id}/ws")
 async def execution_websocket(
     websocket: WebSocket,
     execution_id: UUID,
+    current_user: User = Depends(get_current_user_ws),
     db: Session = Depends(get_db)
 ):
     """WebSocket endpoint for real-time execution updates"""

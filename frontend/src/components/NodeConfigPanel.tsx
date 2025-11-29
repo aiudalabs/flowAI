@@ -4,9 +4,17 @@ import { X } from 'lucide-react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import type { NodeConfigData } from '@/types/workflow'
 
+import { useQuery } from '@tanstack/react-query'
+import { datasetApi } from '@/services/api'
+
 export default function NodeConfigPanel() {
   const { selectedNode, updateNode, setSelectedNode } = useWorkflowStore()
   const { register, handleSubmit, reset } = useForm<NodeConfigData>()
+
+  const { data: datasets, isLoading: isLoadingDatasets } = useQuery({
+    queryKey: ['datasets'],
+    queryFn: datasetApi.list
+  })
 
   useEffect(() => {
     if (selectedNode) {
@@ -245,6 +253,46 @@ export default function NodeConfigPanel() {
                 <option value="text">Text</option>
                 <option value="raw">Raw</option>
               </select>
+            </div>
+          </div>
+        )
+
+      case 'dataset':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Label</label>
+              <input
+                {...register('label')}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Dataset name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Select Dataset</label>
+              <select
+                {...register('dataset_id')}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="">Select a dataset...</option>
+                {datasets?.map((dataset) => (
+                  <option key={dataset.id} value={dataset.id}>
+                    {dataset.name} ({dataset.file_type})
+                  </option>
+                ))}
+              </select>
+              {isLoadingDatasets && (
+                <p className="text-xs text-gray-500 mt-1">Loading datasets...</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Output Key</label>
+              <input
+                {...register('output_key')}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="dataset_df"
+                defaultValue="dataset_df"
+              />
             </div>
           </div>
         )
